@@ -19,9 +19,10 @@ class PemantauanKualitasUdara extends Page
 
     public function mount(): void
     {
-        // Default to the first faculty in the database
-        $first = Faculty::orderBy('name')->first();
-        $this->faculty_id = $first?->id;
+        // Always default to Fakultas Teknik for focused real-time monitoring
+        $this->faculty_id = Faculty::where('name', 'like', '%Teknik%')
+            ->value('id')
+            ?? Faculty::orderBy('name')->value('id');
     }
 
     public function getFacultyOptions(): array

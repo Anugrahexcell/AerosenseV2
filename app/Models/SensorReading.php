@@ -50,21 +50,30 @@ class SensorReading extends Model
         })->orderBy('faculty_id');
     }
 
-    // ── Accessors ──────────────────────────────────────────────
+    /**
+     * Compute air quality status live from the current CO2 reading.
+     * This always reflects the CURRENT threshold rules, even for old records.
+     *   400–1,000 ppm  → Bagus
+     *  1,000–2,000 ppm → Sedang
+     *  2,000–5,000 ppm → Buruk
+     */
+    public function getComputedStatusAttribute(): string
+    {
+        if ($this->co2 <= 1000) return 'Bagus';
+        if ($this->co2 <= 2000) return 'Sedang';
+        return 'Buruk';
+    }
 
     /**
-     * Returns a CSS class name matching the air quality status.
-     * Used directly in Blade to apply card border/text colours.
+     * Returns the CSS class based on live computed status (not stored string).
      */
     public function getStatusClassAttribute(): string
     {
-        return match ($this->air_quality_status) {
-            'Baik'                => 'baik',
-            'Sedang'              => 'sedang',
-            'Tidak Sehat'         => 'tidak-sehat',
-            'Sangat Tidak Sehat'  => 'sangat-tidak-sehat',
-            'Berbahaya'           => 'berbahaya',
-            default               => 'baik',
+        return match ($this->computed_status) {
+            'Bagus'  => 'bagus',
+            'Sedang' => 'sedang',
+            'Buruk'  => 'buruk',
+            default  => 'bagus',
         };
     }
 }

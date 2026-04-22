@@ -1,10 +1,31 @@
 <x-filament-panels::page>
 
-    {{-- Filter Section: Fakultas | Rentang Waktu | Parameter — all in ONE ROW --}}
+    {{-- ⟳ Auto-refresh every 10 seconds to pick up new IoT sensor data --}}
+    <div wire:poll.60s></div>
+
+    @php
+        $latestReading = $faculty_id
+            ? \App\Models\SensorReading::where('faculty_id', $faculty_id)->latest('recorded_at')->first()
+            : null;
+        $suhuVal       = $latestReading ? number_format($latestReading->temperature, 1) : '—';
+        $kelembapanVal = $latestReading ? number_format($latestReading->humidity, 1)    : '—';
+        $co2Val        = $latestReading ? number_format($latestReading->co2, 1)         : '—';
+        $lastUpdated   = $latestReading ? $latestReading->recorded_at->diffForHumans()  : 'Belum ada data';
+    @endphp
+
+    {{-- Filter Section + Live Badge --}}
     <x-filament::section>
+        {{-- Live badge top-right --}}
+        <div style="display:flex; justify-content:flex-end; margin-bottom:0.6rem;">
+            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.76rem; color:#6b7280;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; animation:aeroPulse 1.5s infinite;"></span>
+                Pembaruan otomatis &bull; Terakhir: <strong>{{ $lastUpdated }}</strong>
+            </div>
+        </div>
+
+        {{-- Filters in ONE ROW --}}
         <div style="display:flex; flex-direction:row; align-items:flex-end; gap:1rem; flex-wrap:nowrap;">
 
-            {{-- Fakultas (now uses faculty_id → real DB) --}}
             <div style="flex:1.5; min-width:0;">
                 <label style="display:block; font-size:0.8rem; font-weight:500; margin-bottom:0.3rem; color:#6b7280;">Fakultas</label>
                 <x-filament::input.wrapper>
@@ -16,7 +37,6 @@
                 </x-filament::input.wrapper>
             </div>
 
-            {{-- Rentang Waktu --}}
             <div style="flex:1.5; min-width:0;">
                 <label style="display:block; font-size:0.8rem; font-weight:500; margin-bottom:0.3rem; color:#6b7280;">Rentang Waktu (5 jam)</label>
                 <x-filament::input.wrapper>
@@ -28,10 +48,9 @@
                 </x-filament::input.wrapper>
             </div>
 
-            {{-- Parameter Toggle Buttons --}}
-            <div style="flex-shrink:0; flex-grow:0;">
+            <div style="flex-shrink:0;">
                 <label style="display:block; font-size:0.8rem; font-weight:500; margin-bottom:0.3rem; color:#6b7280;">Parameter</label>
-                <div style="display:flex; flex-direction:row; gap:0.5rem; align-items:center;">
+                <div style="display:flex; gap:0.5rem; align-items:center;">
                     <button type="button" wire:click="toggleParameter('suhu')" wire:loading.attr="disabled"
                         style="display:inline-flex; align-items:center; gap:0.35rem; border-radius:9999px; padding:0.4rem 0.9rem; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; border:none; outline:none;
                         {{ in_array('suhu', $parameters) ? 'background:#f97316; color:#fff;' : 'background:transparent; color:#f97316; outline:1.5px solid #f97316;' }}">
@@ -52,16 +71,7 @@
         </div>
     </x-filament::section>
 
-    {{-- Stats Cards (live, reactive to DB through page Livewire state) --}}
-    @php
-        $latestReading = $faculty_id
-            ? \App\Models\SensorReading::where('faculty_id', $faculty_id)->latest('recorded_at')->first()
-            : null;
-        $suhuVal       = $latestReading ? number_format($latestReading->temperature, 1) : '—';
-        $kelembapanVal = $latestReading ? number_format($latestReading->humidity, 1)    : '—';
-        $co2Val        = $latestReading ? number_format($latestReading->co2, 1)          : '—';
-    @endphp
-
+    {{-- Stats Cards (reactive — pulled fresh on every poll) --}}
     @if(count($parameters) > 0)
     <div style="display:grid; grid-template-columns:repeat({{ count($parameters) }},1fr); gap:1rem;">
         @if(in_array('suhu', $parameters))
@@ -97,11 +107,14 @@
     </div>
     @endif
 
-    {{-- Chart Widget (Chart.js, queries real DB via faculty_id + time_range) --}}
-    @livewire(
-        \App\Filament\Widgets\PemantauanChartWidget::class,
-        ['parameters' => $parameters, 'faculty_id' => $faculty_id, 'time_range' => $time_range],
-        key('chart-' . $faculty_id . '-' . $time_range . '-' . implode(',', $parameters))
-    )
+
+    {{-- Chart has moved to the dedicated "Grafik Tren Data" page in the sidebar --}}
+    <x-filament::section>
+        <div style="text-align:center; padding:1.5rem; color:#6b7280; font-size:0.85rem;">
+            <x-heroicon-o-chart-bar style="width:32px;height:32px;margin:0 auto 0.5rem;color:#d1d5db;" />
+            <div>Grafik tren tersedia di halaman <strong>Grafik Tren Data</strong> pada sidebar.</div>
+        </div>
+    </x-filament::section>
 
 </x-filament-panels::page>
+

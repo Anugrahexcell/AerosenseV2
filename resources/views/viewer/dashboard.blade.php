@@ -63,7 +63,7 @@
                 <div class="faculty-card" id="faculty-card-{{ $reading->faculty_id }}">
                     <div class="faculty-card__name">{{ $reading->faculty->name }}</div>
                     <div class="faculty-card__status {{ $reading->status_class }}">
-                        {{ $reading->air_quality_status }}
+                        {{ $reading->computed_status }}
                     </div>
                     <div class="faculty-card__metrics">
                         <div class="metric-item">
@@ -94,7 +94,7 @@
                 <div class="faculty-card" id="faculty-card-{{ $reading->faculty_id }}">
                     <div class="faculty-card__name">{{ $reading->faculty->name }}</div>
                     <div class="faculty-card__status {{ $reading->status_class }}">
-                        {{ $reading->air_quality_status }}
+                        {{ $reading->computed_status }}
                     </div>
                     <div class="faculty-card__metrics">
                         <div class="metric-item">
@@ -138,31 +138,142 @@
             dan perubahan kualitas udara dari waktu ke waktu
         </p>
 
+        @php
+            // All faculties for the dropdown
+            $allFaculties = \App\Models\Faculty::orderBy('name')->get();
+
+            // Resolve selected faculty from GET param or default to "Fakultas Teknik"
+            $selectedFacultyId = request()->query('faculty_id');
+            if ($selectedFacultyId) {
+                $selectedFaculty = $allFaculties->firstWhere('id', $selectedFacultyId);
+            } else {
+                $selectedFaculty = $allFaculties->first(fn($f) => str_contains(strtolower($f->name), 'teknik'));
+                $selectedFacultyId = $selectedFaculty?->id;
+            }
+            if (!$selectedFaculty) {
+                $selectedFaculty   = $allFaculties->first();
+                $selectedFacultyId = $selectedFaculty?->id;
+            }
+        @endphp
+
         <div class="chart-container" id="chart-container">
-            <div class="chart-header">
+            <div class="chart-header" style="display:flex; align-items:center; gap:0.75rem;">
                 <div class="chart-title-group">
                     <span class="chart-icon">📊</span>
                     <div class="chart-title-text">
-                        <strong>Grafik tren &ndash; 30 Terakhir</strong>
-                        <span>Rata-rata indeks kualitas udara di semua fakultas</span>
+                        <strong>Grafik tren </strong>
+                        <span>Data sensor {{ $selectedFaculty?->name ?? 'Semua Fakultas' }}</span>
                     </div>
                 </div>
-                <div class="chart-date-tag">
-                    <span>📅</span>
-                    <span id="chart-date-range">
-                        {{ now()->subDays(29)->format('d M Y') }} &ndash; {{ now()->format('d M Y') }}
-                    </span>
-                </div>
+
+                {{-- ── Faculty Selector (right side) ──────────────── --}}
+                <form method="GET" action="{{ url()->current() }}#trend-section" id="faculty-filter-form"
+                      style="display:flex; align-items:center; gap:0.5rem; margin-left:auto;">
+                    <label for="faculty_id_chart"
+                           style="font-size:0.78rem; color:#9ca3af; white-space:nowrap;">
+                        Pilih Fakultas:
+                    </label>
+                    <select id="faculty_id_chart" name="faculty_id"
+                            onchange="this.form.submit()"
+                            style="background:#1e293b; color:#e2e8f0; border:1px solid #334155;
+                                   border-radius:0.4rem; padding:0.35rem 0.65rem; font-size:0.82rem;
+                                   cursor:pointer; outline:none;">
+                        @foreach($allFaculties as $faculty)
+                            <option value="{{ $faculty->id }}"
+                                    @selected($faculty->id == $selectedFacultyId)>
+                                {{ $faculty->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
             </div>
 
-            {{-- Placeholder: Chart.js canvas will be placed here in Phase 3 --}}
+        @php
+            $chartReadings = \App\Models\SensorReading::query()
+                ->when($selectedFacultyId, fn ($q) => $q->where('faculty_id', $selectedFacultyId))
+                ->orderBy('recorded_at', 'desc')
+                ->limit(30)
+                ->get()
+                ->reverse()
+                ->values();
+
+            $chartLabels = $chartReadings->map(fn ($r) => $r->recorded_at->format('d/m H:i'))->toArray();
+            $chartTemp   = $chartReadings->pluck('temperature')->map(fn ($v) => round($v, 1))->toArray();
+            $chartHum    = $chartReadings->pluck('humidity')->map(fn ($v) => round($v, 1))->toArray();
+            $chartCo2    = $chartReadings->pluck('co2')->map(fn ($v) => round($v, 1))->toArray();
+        @endphp
+
+        @if($chartReadings->isNotEmpty())
+            {{-- Live Chart.js chart --}}
+            <canvas id="dashboardTrendChart" style="width:100%; max-height:280px; padding:0 1rem 0.5rem;"></canvas>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    new Chart(document.getElementById('dashboardTrendChart'), {
+                        type: 'line',
+                        data: {
+                            labels: @json($chartLabels),
+                            datasets: [
+                                {
+                                    label: 'Suhu (°C)',
+                                    data: @json($chartTemp),
+                                    borderColor: '#f97316',
+                                    backgroundColor: 'rgba(249,115,22,0.1)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 2,
+                                },
+                                {
+                                    label: 'Kelembapan (%)',
+                                    data: @json($chartHum),
+                                    borderColor: '#00d4a0',
+                                    backgroundColor: 'rgba(0,212,160,0.1)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 2,
+                                },
+                                {
+                                    label: 'CO₂ (ppm)',
+                                    data: @json($chartCo2),
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'rgba(239,68,68,0.1)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 2,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: '#9ca3af', font: { size: 12 } }
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { color: '#9ca3af', maxTicksLimit: 8, maxRotation: 45 },
+                                    grid:  { color: 'rgba(255,255,255,0.05)' },
+                                },
+                                y: {
+                                    ticks:     { color: '#9ca3af' },
+                                    grid:      { color: 'rgba(255,255,255,0.05)' },
+                                    beginAtZero: false,
+                                },
+                            },
+                        },
+                    });
+                });
+            </script>
+        @else
             <div class="chart-body-placeholder" id="chart-placeholder">
                 <span class="placeholder-icon">📈</span>
-                <span>Chart.js akan diintegrasikan pada Phase 3</span>
-                <small style="font-size:.7rem; opacity:.6;">
-                    Data siap: {{ $trendData->count() }} entri historis tersedia
-                </small>
+                <span>Belum ada data sensor. Hubungkan perangkat IoT untuk melihat grafik.</span>
             </div>
+        @endif
 
             <div class="chart-legend" aria-label="Chart legend">
                 <div class="legend-item">

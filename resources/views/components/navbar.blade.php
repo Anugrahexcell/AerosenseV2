@@ -41,7 +41,7 @@
     <div class="navbar__right-actions">
         @if(request()->routeIs('viewer.dashboard'))
             <a href="{{ url('/admin') }}" class="admin-login-link">
-                Log in as admin <span aria-hidden="true">&rarr;</span>
+                Log in as admin
             </a>
         @else
             <div class="navbar__spacer" aria-hidden="true"></div>

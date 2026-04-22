@@ -139,7 +139,13 @@
                 </div>
                 <h3 class="article-card__title">{{ $article->title }}</h3>
                 <p class="article-card__excerpt">{{ $article->excerpt }}</p>
-                <a href="#" class="article-card__link" aria-label="Baca artikel: {{ $article->title }}">
+                <a
+                    href="{{ $article->external_url ?: '#' }}"
+                    @if($article->external_url) target="_blank" rel="noopener noreferrer" @endif
+                    class="article-card__link"
+                    aria-label="Baca artikel: {{ $article->title }}"
+                    @if(!$article->external_url) style="opacity:0.4; cursor:not-allowed;" @endif
+                >
                     Baca selengkapnya &rsaquo;
                 </a>
             </article>

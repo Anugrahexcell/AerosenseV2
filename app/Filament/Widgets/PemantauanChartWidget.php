@@ -11,6 +11,9 @@ class PemantauanChartWidget extends ChartWidget
     protected int|string|array $columnSpan = 'full';
     protected ?string $maxHeight = '320px';
 
+    // Excluded from auto-discovery — rendered explicitly via @livewire() in the Pemantauan blade
+    protected static bool $isDiscovered = false;
+
     public array $parameters = [];
     public ?int $faculty_id = null;
     public string $time_range = '08:00 - 13:00';

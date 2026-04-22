@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // AeroSenseV2 — Google Sheets Apps Script webhook URL
+    'google_sheets' => [
+        'webhook_url' => env('GOOGLE_SHEETS_WEBHOOK_URL'),
+    ],
+
 ];

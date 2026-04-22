@@ -7,6 +7,9 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class DashboardStatsOverview extends BaseWidget
 {
+    // Only show on the admin Dashboard page, NOT on any other page
+    protected static string|array $pages = ['filament.admin.pages.dashboard'];
+
     protected function getStats(): array
     {
         return [

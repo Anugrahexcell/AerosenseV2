@@ -10,6 +10,7 @@ class EducationArticle extends Model
     protected $fillable = [
         'title',
         'slug',
+        'external_url',
         'excerpt',
         'content',
         'category',
