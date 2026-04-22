@@ -29,11 +29,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'thresholds' => [
-        'baik'             => [0,    450],
-        'sedang'           => [451,  600],
-        'tidak_sehat'      => [601,  800],
-        'sangat_tidak_sehat' => [801, 1000],
-        'berbahaya'        => [1001, PHP_INT_MAX],
+        // Aligned with XGBoost v4 zone classification
+        'baik'        => [0,    1000],   // CO2 <= 1000 ppm
+        'sedang'      => [1001, 2000],   // CO2 1001-2000 ppm
+        'tidak_sehat' => [2001, PHP_INT_MAX],  // CO2 > 2000 ppm
     ],
 
     /*

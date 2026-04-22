@@ -20,12 +20,12 @@ class AirQualityPredictionSeeder extends Seeder
         // CO₂ reflects real indoor air quality patterns (elevated during occupancy)
 
         $facultySamples = [
-            ['co2' => 1235, 'temp' => 26.1, 'hum' => 62.1, 'status' => 'Sangat Tidak Sehat', 'conf' => 86],
-            ['co2' => 1245, 'temp' => 26.6, 'hum' => 63.1, 'status' => 'Sangat Tidak Sehat', 'conf' => 86],
-            ['co2' =>  880, 'temp' => 25.6, 'hum' => 60.1, 'status' => 'Sangat Tidak Sehat', 'conf' => 86],
-            ['co2' =>  714, 'temp' => 26.4, 'hum' => 64.1, 'status' => 'Tidak Sehat',         'conf' => 86],
-            ['co2' =>  838, 'temp' => 25.8, 'hum' => 61.1, 'status' => 'Sangat Tidak Sehat', 'conf' => 86],
-            ['co2' =>  806, 'temp' => 26.8, 'hum' => 65.1, 'status' => 'Sangat Tidak Sehat', 'conf' => 86],
+            ['co2' => 1235, 'temp' => 26.1, 'hum' => 62.1, 'status' => 'Sedang', 'conf' => 86],
+            ['co2' => 1245, 'temp' => 26.6, 'hum' => 63.1, 'status' => 'Sedang', 'conf' => 86],
+            ['co2' =>  880, 'temp' => 25.6, 'hum' => 60.1, 'status' => 'Baik',   'conf' => 86],
+            ['co2' =>  714, 'temp' => 26.4, 'hum' => 64.1, 'status' => 'Baik',   'conf' => 86],
+            ['co2' =>  838, 'temp' => 25.8, 'hum' => 61.1, 'status' => 'Baik',   'conf' => 86],
+            ['co2' =>  806, 'temp' => 26.8, 'hum' => 65.1, 'status' => 'Baik',   'conf' => 86],
         ];
 
         // 1. Per-faculty daily predictions
@@ -47,10 +47,10 @@ class AirQualityPredictionSeeder extends Seeder
 
         // 2. Campus-wide hourly predictions — 4 time slots from device2.csv
         $hourlyData = [
-            ['time' => '08:00', 'co2' =>  880, 'temp' => 23.7, 'hum' => 60.8, 'status' => 'Sangat Tidak Sehat'],
-            ['time' => '12:00', 'co2' =>  721, 'temp' => 25.3, 'hum' => 64.4, 'status' => 'Tidak Sehat'],
-            ['time' => '15:00', 'co2' =>  714, 'temp' => 26.1, 'hum' => 66.3, 'status' => 'Tidak Sehat'],
-            ['time' => '18:00', 'co2' =>  838, 'temp' => 24.4, 'hum' => 59.4, 'status' => 'Sangat Tidak Sehat'],
+            ['time' => '08:00', 'co2' =>  880, 'temp' => 23.7, 'hum' => 60.8, 'status' => 'Baik'],
+            ['time' => '12:00', 'co2' =>  721, 'temp' => 25.3, 'hum' => 64.4, 'status' => 'Baik'],
+            ['time' => '15:00', 'co2' => 2016, 'temp' => 26.1, 'hum' => 66.3, 'status' => 'Tidak Sehat'],
+            ['time' => '18:00', 'co2' => 1340, 'temp' => 24.4, 'hum' => 59.4, 'status' => 'Sedang'],
         ];
 
         foreach ($hourlyData as $h) {
@@ -73,10 +73,10 @@ class AirQualityPredictionSeeder extends Seeder
         // 3. Campus-wide daily predictions — today + 3 days
         // Values = daily averages of XGBoost v4 predictions on last 4 days of device2.csv
         $dailyData = [
-            ['offset' => 0, 'co2' => 714, 'temp' => 26.6, 'hum' => 70.8, 'status' => 'Tidak Sehat'],
-            ['offset' => 1, 'co2' => 838, 'temp' => 25.2, 'hum' => 67.9, 'status' => 'Sangat Tidak Sehat'],
-            ['offset' => 2, 'co2' => 880, 'temp' => 25.7, 'hum' => 68.0, 'status' => 'Sangat Tidak Sehat'],
-            ['offset' => 3, 'co2' => 806, 'temp' => 26.0, 'hum' => 67.8, 'status' => 'Sangat Tidak Sehat'],
+            ['offset' => 0, 'co2' => 714, 'temp' => 26.6, 'hum' => 70.8, 'status' => 'Baik'],
+            ['offset' => 1, 'co2' => 838, 'temp' => 25.2, 'hum' => 67.9, 'status' => 'Baik'],
+            ['offset' => 2, 'co2' => 880, 'temp' => 25.7, 'hum' => 68.0, 'status' => 'Baik'],
+            ['offset' => 3, 'co2' => 806, 'temp' => 26.0, 'hum' => 67.8, 'status' => 'Baik'],
         ];
 
         foreach ($dailyData as $d) {

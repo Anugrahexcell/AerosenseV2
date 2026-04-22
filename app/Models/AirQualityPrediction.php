@@ -63,13 +63,12 @@ class AirQualityPrediction extends Model
      */
     public function getStatusClassAttribute(): string
     {
+        // 3 categories aligned with XGBoost v4 zone classification
         return match ($this->predicted_status) {
-            'Baik'                => 'baik',
-            'Sedang'              => 'sedang',
-            'Tidak Sehat'         => 'tidak-sehat',
-            'Sangat Tidak Sehat'  => 'sangat-tidak-sehat',
-            'Berbahaya'           => 'berbahaya',
-            default               => 'baik',
+            'Baik'         => 'baik',
+            'Sedang'       => 'sedang',
+            'Tidak Sehat'  => 'tidak-sehat',
+            default        => 'baik',
         };
     }
 }
