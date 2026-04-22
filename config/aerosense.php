@@ -18,10 +18,10 @@ return [
     */
     'total_faculties'  => 13,
     'monitoring_hours' => '24/7',
-    'model_accuracy'   => 86,
-    'model_name'       => 'AeroSense v2',
-    'model_algorithm'  => 'Random Forest',
-    'prediction_hours' => 24,
+    'model_accuracy'   => 91,                          // XGBoost v4 temp/humidity R²≈0.91
+    'model_name'       => 'AeroSense v2 (XGBoost v4)',
+    'model_algorithm'  => 'XGBoost',
+    'prediction_hours' => 1,                           // 60-minute ahead forecast
 
     /*
     |--------------------------------------------------------------------------
