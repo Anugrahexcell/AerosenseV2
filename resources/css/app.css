@@ -243,9 +243,9 @@ img { display: block; max-width: 100%; }
 .faculty-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .faculty-card__name { font-size: .88rem; font-weight: 700; color: var(--text-dark); margin-bottom: .2rem; }
 .faculty-card__status { font-size: .78rem; font-weight: 600; margin-bottom: .7rem; }
-.faculty-card__status.bagus  { color: var(--status-baik); }    /* green  — 400–1000 ppm */
-.faculty-card__status.sedang { color: var(--status-sedang); }  /* yellow — 1000–2000 ppm */
-.faculty-card__status.buruk  { color: var(--status-sangat); }  /* red    — 2000–5000 ppm */
+.faculty-card__status.baik        { color: var(--status-baik); }    /* green  — ≤1000 ppm */
+.faculty-card__status.sedang      { color: var(--status-sedang); }  /* yellow — 1001–2000 ppm */
+.faculty-card__status.tidak-sehat { color: var(--status-sangat); }  /* red    — >2000 ppm */
 .faculty-card__metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem .75rem; }
 .metric-item { display: flex; align-items: center; gap: .3rem; font-size: .72rem; color: var(--text-muted); }
 .metric-item strong { color: var(--text-dark); font-weight: 600; }

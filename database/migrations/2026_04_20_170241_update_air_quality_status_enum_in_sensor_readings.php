@@ -12,20 +12,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Change column from ENUM to VARCHAR so any string value is accepted
-        DB::statement("ALTER TABLE sensor_readings MODIFY COLUMN air_quality_status VARCHAR(30) NOT NULL DEFAULT 'Bagus'");
+        // MODIFY COLUMN is MySQL-only; SQLite uses loose typing so no ALTER needed
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE sensor_readings MODIFY COLUMN air_quality_status VARCHAR(30) NOT NULL DEFAULT 'Baik'");
+        }
 
-        // Backfill old records with new labels
+        // Backfill stored column with unified labels (works on all drivers)
         DB::statement("UPDATE sensor_readings SET air_quality_status = CASE
-            WHEN co2 <= 1000 THEN 'Bagus'
+            WHEN co2 <= 1000 THEN 'Baik'
             WHEN co2 <= 2000 THEN 'Sedang'
-            ELSE 'Buruk'
+            ELSE 'Tidak Sehat'
         END");
     }
 
     public function down(): void
     {
-        // Revert to original ENUM if needed
-        DB::statement("ALTER TABLE sensor_readings MODIFY COLUMN air_quality_status ENUM('Baik','Sedang','Tidak Sehat','Sangat Tidak Sehat','Berbahaya') NOT NULL DEFAULT 'Baik'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE sensor_readings MODIFY COLUMN air_quality_status ENUM('Baik','Sedang','Tidak Sehat','Sangat Tidak Sehat','Berbahaya') NOT NULL DEFAULT 'Baik'");
+        }
     }
 };
+

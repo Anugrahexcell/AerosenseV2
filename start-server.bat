@@ -14,5 +14,5 @@ echo.
 echo Starting server on 0.0.0.0:8000 ...
 echo (Press Ctrl+C to stop)
 echo.
-cd /d c:\Projects\aerosense-v2
+cd /d "C:\D\Antigravity\AerosenseV2-main"
 php artisan serve --host=0.0.0.0 --port=8000
