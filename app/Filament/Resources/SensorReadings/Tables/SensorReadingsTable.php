@@ -5,7 +5,7 @@ namespace App\Filament\Resources\SensorReadings\Tables;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
+// EditAction intentionally removed — sensor data must not be manually modified
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -17,7 +17,7 @@ class SensorReadingsTable
     {
         return $table
             ->heading('Kelola Data')
-            ->description('Tambah, edit, atau hapus data kualitas udara')
+            ->description('Tambah data kualitas udara atau hapus data korup dari sensor. Data tidak dapat diedit secara manual.')
             ->columns([
                 TextColumn::make('faculty.name')
                     ->label('Fakultas')
@@ -45,6 +45,18 @@ class SensorReadingsTable
                     ->label('CO₂ (ppm)')
                     ->numeric(decimalPlaces: 1)
                     ->sortable(),
+
+                TextColumn::make('air_quality_status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'Baik'               => 'success',
+                        'Sedang'             => 'warning',
+                        'Tidak Sehat'        => 'danger',
+                        'Sangat Tidak Sehat' => 'danger',
+                        'Berbahaya'          => 'danger',
+                        default              => 'gray',
+                    }),
             ])
             ->defaultSort('recorded_at', 'desc')
             ->filters([
@@ -55,29 +67,35 @@ class SensorReadingsTable
             ])
             ->filtersFormMaxHeight('300px')
             ->recordActions([
-                EditAction::make()
-                    ->icon('heroicon-m-pencil')
-                    ->iconButton()
-                    ->color('gray'),
+                // Edit removed — sensor data must not be manually modified
                 DeleteAction::make()
                     ->icon('heroicon-m-trash')
                     ->iconButton()
-                    ->color('danger'),
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Hapus Data Sensor?')
+                    ->modalDescription('Hanya hapus jika data ini korup atau tidak valid dari sensor. Tindakan ini tidak dapat dibatalkan.')
+                    ->modalSubmitActionLabel('Ya, Hapus'),
             ])
             ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Data Terpilih?')
+                        ->modalDescription('Hanya hapus jika data-data ini korup atau tidak valid dari sensor. Tindakan ini tidak dapat dibatalkan.')
+                        ->modalSubmitActionLabel('Ya, Hapus Semua'),
                 ]),
             ])
+            // No headerActions — Create removed (IoT-only data source)
             ->headerActions([
                 CreateAction::make()
                     ->label('Tambah Data')
                     ->icon('heroicon-m-plus')
                     ->color('primary'),
             ])
-            ->emptyStateHeading('Belum Ada Data')
-            ->emptyStateDescription('Klik "Tambah Data" untuk menambah data kualitas udara pertama.')
-            ->emptyStateIcon('heroicon-o-circle-stack')
+            ->emptyStateHeading('Belum Ada Data Sensor')
+            ->emptyStateDescription('Data akan muncul otomatis ketika perangkat IoT mengirimkan pembacaan.')
+            ->emptyStateIcon('heroicon-o-signal')
             ->striped();
     }
 }

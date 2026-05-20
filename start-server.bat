@@ -1,18 +1,33 @@
 @echo off
-echo ============================================
-echo   AeroSense Dev Server (Network Accessible)
-echo ============================================
+echo ============================================================
+echo  AeroSense V2 — Starting Development Environment
+echo ============================================================
 echo.
-echo Your current network IP addresses:
-ipconfig | findstr /i "IPv4"
+
+REM Check if Apache is already running
+tasklist /FI "IMAGENAME eq httpd.exe" 2>NUL | find /I /N "httpd.exe">NUL
+if "%ERRORLEVEL%"=="0" (
+    echo [OK] Apache is already running.
+) else (
+    echo [..] Starting Apache via XAMPP...
+    start "" "C:\xampp\xampp-control.exe"
+    timeout /t 3 /nobreak >NUL
+)
+
 echo.
-echo *** IMPORTANT: Always use THIS bat file ***
-echo *** Never use plain "php artisan serve"  ***
-echo *** Plain serve only works on localhost, ***
-echo *** NOT accessible by the ESP32!         ***
+echo [OK] All systems ready.
 echo.
-echo Starting server on 0.0.0.0:8000 ...
-echo (Press Ctrl+C to stop)
+echo ============================================================
+echo  Open your browser and go to:
 echo.
-cd /d "C:\D\Antigravity\AerosenseV2-main"
-php artisan serve --host=0.0.0.0 --port=8000
+echo     http://localhost:8080        (Viewer Dashboard)
+echo     http://localhost:8080/admin  (Admin Panel)
+echo.
+echo  DO NOT use php artisan serve — use Apache above instead.
+echo ============================================================
+echo.
+
+REM Open browser automatically
+start "" "http://localhost:8080"
+
+pause

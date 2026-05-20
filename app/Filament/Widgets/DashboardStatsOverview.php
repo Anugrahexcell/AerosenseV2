@@ -13,15 +13,15 @@ class DashboardStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Sensor Aktif', '11/13')
+            Stat::make('Sensor Aktif', '13/13')
                 ->description('Fakultas Terhubung')
                 ->descriptionIcon('heroicon-m-battery-100')
                 ->color('success'),
 
-            Stat::make('Sensor Bermasalah', '2')
-                ->description('Perlu Perbaikan')
+            Stat::make('Sensor Bermasalah', '0')
+                ->description('Tidak ada')
                 ->descriptionIcon('heroicon-m-fire')
-                ->color('danger'),
+                ->color('success'),
 
             Stat::make('Status Sistem', 'Normal')
                 ->description('Semua berjalan baik')

@@ -43,9 +43,8 @@
 </section>
 
 {{-- ============================================================
-     SECTION 2 — REAL-TIME AIR QUALITY
-     Note: Data comes from sensor_readings table (seeded for now).
-     Phase 3 will add JavaScript polling every 30 seconds.
+     SECTION 2 — REAL-TIME AIR QUALITY (paginated, JS-toggled)
+     Shows 4 faculties at a time (2 left, 2 right) with prev/next.
      ============================================================ --}}
 <section class="realtime-section" id="realtime-section" aria-labelledby="realtime-title">
     <div class="container">
@@ -55,66 +54,103 @@
         </p>
 
         @if($sensorReadings->isNotEmpty())
+
+        {{-- Serialize all readings for JS --}}
+        @php
+            $readingsJson = $sensorReadings->map(fn($r) => [
+                'faculty_id'  => $r->faculty_id,
+                'name'        => $r->faculty->name ?? '—',
+                'co2'         => round($r->co2, 1),
+                'temperature' => round($r->temperature, 1),
+                'humidity'    => round($r->humidity, 1),
+                'status'      => $r->computed_status,
+                'status_class'=> $r->status_class,
+            ])->values();
+        @endphp
+
         <div class="realtime-grid" id="realtime-grid">
 
-            {{-- Left: first 2 cards --}}
-            <div class="realtime-grid__cards-left">
-                @foreach($sensorReadings->take(2) as $reading)
-                <div class="faculty-card" id="faculty-card-{{ $reading->faculty_id }}">
-                    <div class="faculty-card__name">{{ $reading->faculty->name }}</div>
-                    <div class="faculty-card__status {{ $reading->status_class }}">
-                        {{ $reading->computed_status }}
-                    </div>
-                    <div class="faculty-card__metrics">
-                        <div class="metric-item">
-                            <span>💨 CO₂</span>
-                            <strong>{{ $reading->co2 }} ppm</strong>
-                        </div>
-                        <div class="metric-item">
-                            <span>🌡 Suhu</span>
-                            <strong>{{ $reading->temperature }}°C</strong>
-                        </div>
-                        <div class="metric-item">
-                            <span>💧 Kelembapan</span>
-                            <strong>{{ $reading->humidity }}%</strong>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
+            {{-- Left: 2 cards (filled by JS) --}}
+            <div class="realtime-grid__cards-left" id="rt-cards-left"></div>
 
-            {{-- Center: Globe Illustration --}}
+            {{-- Center: Animated Weather Illustration --}}
             <div class="realtime-grid__center" aria-hidden="true">
-                <div class="globe-visual">🌍</div>
+                <div class="weather-centerpiece">
+                    {{-- Pulsing radar rings --}}
+                    <span class="weather-ring weather-ring--1"></span>
+                    <span class="weather-ring weather-ring--2"></span>
+                    <span class="weather-ring weather-ring--3"></span>
+                    {{-- Rotating shimmer halo --}}
+                    <span class="weather-halo"></span>
+                    {{-- Ambient glow backdrop --}}
+                    <span class="weather-glow"></span>
+                    {{-- The actual image, floating --}}
+                    <img src="{{ asset('assets/images/weather.png') }}"
+                         alt="Weather illustration"
+                         class="weather-img">
+                </div>
             </div>
 
-            {{-- Right: next 2 cards --}}
-            <div class="realtime-grid__cards-right">
-                @foreach($sensorReadings->skip(2)->take(2) as $reading)
-                <div class="faculty-card" id="faculty-card-{{ $reading->faculty_id }}">
-                    <div class="faculty-card__name">{{ $reading->faculty->name }}</div>
-                    <div class="faculty-card__status {{ $reading->status_class }}">
-                        {{ $reading->computed_status }}
-                    </div>
-                    <div class="faculty-card__metrics">
-                        <div class="metric-item">
-                            <span>💨 CO₂</span>
-                            <strong>{{ $reading->co2 }} ppm</strong>
-                        </div>
-                        <div class="metric-item">
-                            <span>🌡 Suhu</span>
-                            <strong>{{ $reading->temperature }}°C</strong>
-                        </div>
-                        <div class="metric-item">
-                            <span>💧 Kelembapan</span>
-                            <strong>{{ $reading->humidity }}%</strong>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
+            {{-- Right: 2 cards (filled by JS) --}}
+            <div class="realtime-grid__cards-right" id="rt-cards-right"></div>
 
         </div>
+
+        {{-- Prev / Page indicator / Next --}}
+        <div class="realtime-controls" id="realtime-controls" aria-label="Navigasi halaman fakultas">
+            <button class="realtime-btn prev" id="rt-btn-prev"
+                    onclick="rtChangePage(-1)" aria-label="Sebelumnya">
+                <i class="btn-arrow">←</i> Sebelumnya
+            </button>
+            <span class="realtime-page" id="rt-page-indicator" aria-live="polite">1 / 1</span>
+            <button class="realtime-btn next" id="rt-btn-next"
+                    onclick="rtChangePage(1)" aria-label="Berikutnya">
+                Berikutnya <i class="btn-arrow">→</i>
+            </button>
+        </div>
+
+        <script>
+        (function () {
+            const readings  = @json($readingsJson);
+            const PER_PAGE  = 4;
+            let   page      = 0;
+            const totalPages = Math.ceil(readings.length / PER_PAGE);
+
+            function makeCard(r) {
+                return `<div class="faculty-card" id="faculty-card-${r.faculty_id}">
+                    <div class="faculty-card__name">${r.name}</div>
+                    <div class="faculty-card__status ${r.status_class}">${r.status}</div>
+                    <div class="faculty-card__metrics">
+                        <div class="metric-item"><span>💨 CO₂</span><strong>${r.co2} ppm</strong></div>
+                        <div class="metric-item"><span>🌡 Suhu</span><strong>${r.temperature}°C</strong></div>
+                        <div class="metric-item"><span>💧 Kelembapan</span><strong>${r.humidity}%</strong></div>
+                    </div>
+                </div>`;
+            }
+
+            function render() {
+                const start  = page * PER_PAGE;
+                const slice  = readings.slice(start, start + PER_PAGE);
+                const left   = slice.slice(0, 2);
+                const right  = slice.slice(2, 4);
+
+                document.getElementById('rt-cards-left').innerHTML  = left.map(makeCard).join('');
+                document.getElementById('rt-cards-right').innerHTML = right.map(makeCard).join('');
+                document.getElementById('rt-page-indicator').textContent =
+                    `${page + 1} / ${totalPages}`;
+                document.getElementById('rt-btn-prev').disabled = (page === 0);
+                document.getElementById('rt-btn-next').disabled = (page >= totalPages - 1);
+            }
+
+            window.rtChangePage = function (dir) {
+                page = Math.max(0, Math.min(totalPages - 1, page + dir));
+                render();
+            };
+
+            render(); // initial render
+        })();
+        </script>
+
         @else
         <div class="chart-body-placeholder" style="margin-top: 1rem;">
             <span class="placeholder-icon">📡</span>
@@ -207,7 +243,7 @@
             {{-- Live Chart.js chart --}}
             <canvas id="dashboardTrendChart" style="width:100%; max-height:280px; padding:0 1rem 0.5rem;"></canvas>
 
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+            {{-- Chart.js from local npm bundle via app.js — no CDN --}}
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     new Chart(document.getElementById('dashboardTrendChart'), {

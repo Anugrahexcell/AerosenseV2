@@ -55,9 +55,7 @@ class SensorDataController extends Controller
             // ── Limit receiving to once per hour per faculty ──
             $lastReading = SensorReading::where('faculty_id', $facultyId)->latest('recorded_at')->first();
             $diffSeconds = $lastReading ? abs(now()->diffInSeconds($lastReading->recorded_at)) : 99999;
-            Log::info("Throttle check — Faculty #{$facultyId} | last recorded_at={$lastReading?->recorded_at} | diff={$diffSeconds}s");
             if ($lastReading && $diffSeconds < 3600) {
-                Log::info("Data SKIPPED (throttle active, {$diffSeconds}s < 3600s)");
                 return response()->json([
                     'success'    => true,
                     'message'    => 'Data skipped (1 hour throttling active)',

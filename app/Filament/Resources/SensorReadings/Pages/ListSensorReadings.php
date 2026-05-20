@@ -15,7 +15,8 @@ class ListSensorReadings extends ListRecords
     protected string $view = 'filament.resources.sensor-readings.pages.list-sensor-readings';
 
     /**
-     * Pre-apply the "Fakultas Teknik" filter + use a custom view with wire:poll
+     * Pre-apply the "Fakultas Teknik" filter so users see Teknik data immediately.
+     * Create action removed — data is IoT-only and must not be manually added.
      */
     public function mount(): void
     {
@@ -24,13 +25,13 @@ class ListSensorReadings extends ListRecords
         $teknikId = Faculty::where('name', 'like', '%Teknik%')->value('id');
 
         if ($teknikId) {
-            // Pre-apply the faculty filter so users see Teknik data immediately
             $this->tableFilters = [
                 'faculty_id' => ['value' => (string) $teknikId],
             ];
         }
     }
 
+    // Create restored — Edit removed (sensor data must not be manually modified)
     protected function getHeaderActions(): array
     {
         return [

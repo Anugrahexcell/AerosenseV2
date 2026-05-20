@@ -4,15 +4,6 @@ namespace App\Filament\Pages;
 
 use App\Models\Faculty;
 use App\Models\SensorReading;
-use Filament\Actions\Action;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -53,14 +44,13 @@ class GrafikTrenData extends Page implements HasTable
         ];
     }
 
-    // ── Chart JSON consumed by Chart.js inline script ────────────
+    // ── Chart JSON — all hourly readings in the selected period ──
     public function getChartData(): array
     {
         $readings = SensorReading::query()
             ->when($this->faculty_id, fn ($q) => $q->where('faculty_id', $this->faculty_id))
-            ->where('recorded_at', '>=', now()->subDays((int)$this->period))
+            ->where('recorded_at', '>=', now()->subDays((int) $this->period))
             ->orderBy('recorded_at')
-            ->limit(60)
             ->get();
 
         if ($readings->isEmpty()) {
@@ -75,7 +65,7 @@ class GrafikTrenData extends Page implements HasTable
         ];
     }
 
-    // ── Latest stats for selected faculty ────────────────────────
+    // ── Latest reading stats for the selected faculty ─────────────
     public function getLatestStats(): array
     {
         $reading = SensorReading::query()
@@ -83,20 +73,29 @@ class GrafikTrenData extends Page implements HasTable
             ->latest('recorded_at')
             ->first();
 
+        $count = SensorReading::query()
+            ->when($this->faculty_id, fn ($q) => $q->where('faculty_id', $this->faculty_id))
+            ->where('recorded_at', '>=', now()->subDays((int) $this->period))
+            ->count();
+
         return [
             'temperature' => $reading ? number_format($reading->temperature, 1) : '—',
             'humidity'    => $reading ? number_format($reading->humidity, 1)    : '—',
             'co2'         => $reading ? number_format($reading->co2, 1)         : '—',
+            'status'      => $reading?->computed_status                          ?? '—',
+            'status_class'=> $reading?->status_class                             ?? '',
+            'recorded_at' => $reading?->recorded_at?->diffForHumans()           ?? '—',
+            'total'       => $count,
         ];
     }
 
-    // ── Table query (scoped to selected faculty + period) ─────────
+    // ── Read-only table (no CRUD actions) ─────────────────────────
     protected function getTableQuery(): Builder
     {
         return SensorReading::query()
             ->with('faculty')
             ->when($this->faculty_id, fn ($q) => $q->where('faculty_id', $this->faculty_id))
-            ->where('recorded_at', '>=', now()->subDays((int)$this->period))
+            ->where('recorded_at', '>=', now()->subDays((int) $this->period))
             ->orderBy('recorded_at', 'desc');
     }
 
@@ -104,10 +103,9 @@ class GrafikTrenData extends Page implements HasTable
     {
         return [
             TextColumn::make('recorded_at')
-                ->label('Waktu')
-                ->dateTime('d M Y H:i:s')
-                ->sortable()
-                ->searchable(),
+                ->label('Waktu Pencatatan')
+                ->dateTime('d M Y, H:i')
+                ->sortable(),
 
             TextColumn::make('faculty.name')
                 ->label('Fakultas')
@@ -132,7 +130,7 @@ class GrafikTrenData extends Page implements HasTable
                 ->color('success'),
 
             TextColumn::make('air_quality_status')
-                ->label('Status')
+                ->label('Status Kualitas')
                 ->badge()
                 ->color(fn ($state) => match ($state) {
                     'Baik'               => 'success',
@@ -145,80 +143,24 @@ class GrafikTrenData extends Page implements HasTable
         ];
     }
 
-    protected function getTableActions(): array
-    {
-        return [
-            EditAction::make()
-                ->form($this->getSensorReadingFormSchema())
-                ->iconButton(),
+    // ── No CRUD actions (read-only) ───────────────────────────────
+    protected function getTableActions(): array        { return []; }
+    protected function getTableHeaderActions(): array  { return []; }
+    protected function getTableBulkActions(): array    { return []; }
 
-            DeleteAction::make()
-                ->iconButton(),
-        ];
+    // ── Empty state ───────────────────────────────────────────────
+    protected function getTableEmptyStateHeading(): ?string
+    {
+        return 'Belum ada data sensor untuk periode ini';
     }
 
-    protected function getTableHeaderActions(): array
+    protected function getTableEmptyStateDescription(): ?string
     {
-        return [
-            CreateAction::make()
-                ->label('Tambah Data')
-                ->icon('heroicon-m-plus')
-                ->model(SensorReading::class)
-                ->form($this->getSensorReadingFormSchema())
-                ->mutateFormDataUsing(function (array $data): array {
-                    // Default to selected faculty if not explicitly chosen in the form
-                    $data['faculty_id'] ??= $this->faculty_id;
-                    return $data;
-                })
-                ->successNotification(
-                    Notification::make()->success()->title('Data berhasil ditambahkan')
-                ),
-        ];
+        return 'Data akan muncul otomatis ketika perangkat IoT mengirimkan pembacaan.';
     }
 
-    protected function getTableBulkActions(): array
+    protected function getTableEmptyStateIcon(): ?string
     {
-        return [
-            DeleteBulkAction::make(),
-        ];
-    }
-
-    protected function getSensorReadingFormSchema(): array
-    {
-        return [
-            Select::make('faculty_id')
-                ->label('Fakultas')
-                ->options(Faculty::orderBy('name')->pluck('name', 'id'))
-                ->required()
-                ->searchable(),
-
-            TextInput::make('temperature')
-                ->label('Suhu (°C)')
-                ->numeric()
-                ->required()
-                ->minValue(-50)
-                ->maxValue(100)
-                ->step(0.1),
-
-            TextInput::make('humidity')
-                ->label('Kelembapan (%)')
-                ->numeric()
-                ->required()
-                ->minValue(0)
-                ->maxValue(100)
-                ->step(0.1),
-
-            TextInput::make('co2')
-                ->label('CO₂ (ppm)')
-                ->numeric()
-                ->required()
-                ->minValue(0)
-                ->step(0.1),
-
-            DateTimePicker::make('recorded_at')
-                ->label('Waktu Pencatatan')
-                ->required()
-                ->default(now()),
-        ];
+        return 'heroicon-o-signal';
     }
 }

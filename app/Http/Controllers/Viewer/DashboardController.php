@@ -19,7 +19,6 @@ class DashboardController extends Controller
         try {
             $sensorReadings = SensorReading::with('faculty')
                 ->latestPerFaculty()
-                ->take(6)
                 ->get();
 
             $trendData = AirQualityTrend::campusWide()

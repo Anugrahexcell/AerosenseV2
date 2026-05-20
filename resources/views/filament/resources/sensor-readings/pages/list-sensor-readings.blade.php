@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    {{-- ⟳ Auto-refresh every 10 seconds to pick up new sensor readings from Fakultas Teknik --}}
-    <div wire:poll.60s></div>
-
+    {{-- Auto-refresh removed: wire:poll caused blocking on single-threaded dev server --}}
     {{ $this->content }}
 </x-filament-panels::page>

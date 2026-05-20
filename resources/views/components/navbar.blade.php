@@ -27,14 +27,6 @@
                 Education
             </a>
         </li>
-        <li>
-            <a href="{{ route('viewer.prediction') }}"
-               class="navbar__link {{ request()->routeIs('viewer.prediction') ? 'active' : '' }}"
-               id="nav-prediction"
-               aria-current="{{ request()->routeIs('viewer.prediction') ? 'page' : 'false' }}">
-                Prediction
-            </a>
-        </li>
     </ul>
 
     {{-- Right spacer/actions --}}

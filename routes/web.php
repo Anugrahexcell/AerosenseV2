@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Viewer\DashboardController;
 use App\Http\Controllers\Viewer\EducationController;
-use App\Http\Controllers\Viewer\PredictionController;
+use App\Http\Controllers\Admin\PrediksiPdfController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,4 +12,15 @@ use App\Http\Controllers\Viewer\PredictionController;
 */
 Route::get('/', [DashboardController::class, 'index'])->name('viewer.dashboard');
 Route::get('/education', [EducationController::class, 'index'])->name('viewer.education');
-Route::get('/prediction', [PredictionController::class, 'index'])->name('viewer.prediction');
+
+// Prediction page removed from viewer — moved to Admin panel only
+
+/*
+|--------------------------------------------------------------------------
+| Admin PDF Download Routes (auth required via Filament session)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/prediksi/pdf', [PrediksiPdfController::class, 'download'])
+         ->name('admin.prediksi.pdf');
+});

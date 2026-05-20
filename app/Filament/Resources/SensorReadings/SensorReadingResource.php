@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\SensorReadings;
 
 use App\Filament\Resources\SensorReadings\Pages\CreateSensorReading;
-use App\Filament\Resources\SensorReadings\Pages\EditSensorReading;
 use App\Filament\Resources\SensorReadings\Pages\ListSensorReadings;
 use App\Filament\Resources\SensorReadings\Schemas\SensorReadingForm;
 use App\Filament\Resources\SensorReadings\Tables\SensorReadingsTable;
@@ -48,9 +47,9 @@ class SensorReadingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListSensorReadings::route('/'),
+            'index'  => ListSensorReadings::route('/'),
             'create' => CreateSensorReading::route('/create'),
-            'edit' => EditSensorReading::route('/{record}/edit'),
+            // 'edit' route removed — sensor data must not be manually modified
         ];
     }
 }
